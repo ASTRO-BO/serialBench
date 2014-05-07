@@ -33,7 +33,7 @@ message Packet
 	{
 		message Sample
 		{
-			required int32 value = 1;
+			required uint32 value = 1;
 		}
 
 		repeated Sample samples = 1;
