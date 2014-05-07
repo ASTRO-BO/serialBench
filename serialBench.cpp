@@ -1,6 +1,13 @@
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include "packet.pb.h"
+
+#define NANO 1000000000L
+double timediff(struct timespec start, struct timespec stop){
+    double secs = (stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec) / (double)NANO;
+    return secs;
+}
 
 void setPacket(benchmark::Packet& packet)
 {
@@ -120,21 +127,40 @@ int main(int argc, char* argv[]) {
 
 	const int NPACKETS = 528;
 	benchmark::Packet packet[NPACKETS];
-	for(int i=0; i<NPACKETS; i++)
-	{
-		std::cout << "Initializing packet " << i << std::endl;
-		setPacket(packet[i]);
-	}
-	printPacket(packet[0]);
 
+	std::cout << "Initializing " << NPACKETS << " packets.." << std::endl;
+	for(int i=0; i<NPACKETS; i++)
+		setPacket(packet[i]);
+	std::cout << "Initialization complete." << std::endl;
+
+//	printPacket(packet[0]);
+
+	int buffSize[NPACKETS];
 	void *buffers[NPACKETS];
+
+	struct timespec tstart, tend;
+
+	std::cout << "Serializing " << NPACKETS << " packets.." << std::endl;
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tstart);
+
 	for(int i=0; i<NPACKETS; i++)
 	{
-//		std::cout << "Structure serialized to array size: " << packet[i].ByteSize() << " bytes" << std::endl;
-		int buffSize = packet[i].ByteSize();
-		buffers[i] = new char[buffSize];
-		packet[i].SerializeToArray(buffers[i], buffSize);
+		buffSize[i] = packet[i].ByteSize();
+		buffers[i] = new char[buffSize[i]];
+		packet[i].SerializeToArray(buffers[i], buffSize[i]);
 	}
+
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tend);
+	std::cout << "Serialized in: " << timediff(tstart,tend) << " seconds." << std::endl;
+
+	std::cout << "Parsing " << NPACKETS << " serialized packets.." << std::endl;
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tstart);
+
+	for(int i=0; i<NPACKETS; i++)
+		packet[i].ParseFromArray(buffers[i], buffSize[i]);
+
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &tend);
+	std::cout << "Parsed in: " << timediff(tstart,tend) << " seconds." << std::endl;
 
 	google::protobuf::ShutdownProtobufLibrary();
 
