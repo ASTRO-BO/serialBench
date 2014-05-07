@@ -2,6 +2,64 @@
 #include <iostream>
 #include "packet.pb.h"
 
+void setPacket(benchmark::Packet& packet)
+{
+	int structSize = sizeof(benchmark::Packet);
+
+	benchmark::Packet::Header* h = packet.mutable_header();
+	h->set_version(1);
+	h->set_type(2);
+	h->set_dhdf(3);
+	h->set_apid(4);
+	h->set_sf(5);
+	h->set_sourcesequencecounter(6);
+	h->set_packetlength(7);
+	h->set_crcflag(8);
+	h->set_packettype(9);
+	h->set_packetsubtype(10);
+
+	benchmark::Packet::DataFieldHeader* dfh = packet.mutable_datafieldheader();
+	dfh->set_timesec(1);
+	dfh->set_timens(2);
+	dfh->set_arrayid(3);
+	dfh->set_runnumber(4);
+	dfh->set_eventnumber(5);
+	dfh->set_telescopeid(6);
+	dfh->set_ntriggered(7);
+	dfh->set_telescopecounter(8);
+
+	const int N = 1800;
+	const int M = 40;
+	benchmark::Packet::SourceDataFieldFixed* sdff = packet.mutable_sourcedatafieldfixed();
+	sdff->set_n1(N);
+	sdff->set_n2(0);
+	sdff->set_nsamples(M);
+	sdff->set_nid(0);
+
+	for(int n=0; n<sdff->n1(); n++)
+	{
+		benchmark::Packet::Pixel* FADC = packet.add_fadcs();
+
+		for(int m=0; m<sdff->nsamples(); m++)
+		{
+			benchmark::Packet::Pixel::Sample* sample = FADC->add_samples();
+			int randNum = std::rand() / (RAND_MAX * 1.0f) * 65535; // [0-65535] (16bit)
+			sample->set_value(randNum);
+			structSize += sizeof(benchmark::Packet::Pixel::Sample);
+		}
+		structSize += sizeof(benchmark::Packet::Pixel);
+	}
+
+	for(int i=0; i<sdff->nid(); i++)
+	{
+		benchmark::Packet::ID* id = packet.add_pixelids();
+		id->set_value(i);
+		structSize += sizeof(benchmark::Packet::ID);
+	}
+
+//	std::cout << "Structure size: " << structSize << " bytes" << std::endl;
+}
+
 void printPacket(const benchmark::Packet& packet)
 {
 	std::cout << "Version: " << packet.header().version() << std::endl;
@@ -60,64 +118,23 @@ int main(int argc, char* argv[]) {
 
 	std::srand(42);
 
-	benchmark::Packet packet;
-	int structSize = sizeof(benchmark::Packet);
-
-	benchmark::Packet::Header* h = packet.mutable_header();
-	h->set_version(1);
-	h->set_type(2);
-	h->set_dhdf(3);
-	h->set_apid(4);
-	h->set_sf(5);
-	h->set_sourcesequencecounter(6);
-	h->set_packetlength(7);
-	h->set_crcflag(8);
-	h->set_packettype(9);
-	h->set_packetsubtype(10);
-
-	benchmark::Packet::DataFieldHeader* dfh = packet.mutable_datafieldheader();
-	dfh->set_timesec(1);
-	dfh->set_timens(2);
-	dfh->set_arrayid(3);
-	dfh->set_runnumber(4);
-	dfh->set_eventnumber(5);
-	dfh->set_telescopeid(6);
-	dfh->set_ntriggered(7);
-	dfh->set_telescopecounter(8);
-
-	const int N = 1800;
-	const int M = 40;
-	benchmark::Packet::SourceDataFieldFixed* sdff = packet.mutable_sourcedatafieldfixed();
-	sdff->set_n1(N);
-	sdff->set_n2(0);
-	sdff->set_nsamples(M);
-	sdff->set_nid(0);
-
-	for(int n=0; n<sdff->n1(); n++)
+	const int NPACKETS = 528;
+	benchmark::Packet packet[NPACKETS];
+	for(int i=0; i<NPACKETS; i++)
 	{
-		benchmark::Packet::Pixel* FADC = packet.add_fadcs();
-
-		for(int m=0; m<sdff->nsamples(); m++)
-		{
-			benchmark::Packet::Pixel::Sample* sample = FADC->add_samples();
-			int randNum = std::rand() / (RAND_MAX * 1.0f) * 65535; // [0-65535] (16bit)
-			sample->set_value(randNum);
-			structSize += sizeof(benchmark::Packet::Pixel::Sample);
-		}
-		structSize += sizeof(benchmark::Packet::Pixel);
+		std::cout << "Initializing packet " << i << std::endl;
+		setPacket(packet[i]);
 	}
+	printPacket(packet[0]);
 
-	for(int i=0; i<sdff->nid(); i++)
+	void *buffers[NPACKETS];
+	for(int i=0; i<NPACKETS; i++)
 	{
-		benchmark::Packet::ID* id = packet.add_pixelids();
-		id->set_value(i);
-		structSize += sizeof(benchmark::Packet::ID);
+//		std::cout << "Structure serialized to array size: " << packet[i].ByteSize() << " bytes" << std::endl;
+		int buffSize = packet[i].ByteSize();
+		buffers[i] = new char[buffSize];
+		packet[i].SerializeToArray(buffers[i], buffSize);
 	}
-
-	printPacket(packet);
-
-	std::cout << "Structure size: " << structSize << " bytes" << std::endl;
-	std::cout << "Structure serialized to array size: " << packet.ByteSize() << " bytes" << std::endl;
 
 	google::protobuf::ShutdownProtobufLibrary();
 
