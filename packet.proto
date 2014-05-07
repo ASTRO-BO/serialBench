@@ -1,7 +1,5 @@
 package benchmark;
 
-// TODO fix data types
-
 message Packet
 {
 
