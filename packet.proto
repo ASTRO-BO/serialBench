@@ -1,0 +1,75 @@
+package benchmark;
+
+// TODO fix data types
+
+message Packet
+{
+
+	message Header
+	{
+		required int32 version = 1;
+		required int32 type = 2;
+		required int32 DHDF = 3;
+		required int32 APID = 4;
+		required int32 SF = 5;
+		required int32 sourceSequenceCounter = 6;
+		required int32 packetLength = 7;
+		required int32 crcFlag = 8;
+		required int32 packetType = 9;
+		required int32 packetSubType = 10;
+	}
+
+	message DataFieldHeader
+	{
+		required int32 timeSec = 1;
+		required int64 timeNs = 2;
+		required int32 arrayId = 3;
+		required int32 runNumber = 4;
+		required int32 eventNumber = 5;
+		required int32 telescopeID = 6;
+		required int32 nTriggered = 7;
+		required int32 telescopeCounter = 8;
+	}
+
+	message Pixel
+	{
+		message Sample
+		{
+			required int32 value = 1;
+		}
+
+		repeated Sample samples = 1;
+	}
+
+	message ID
+	{
+		required int32 value = 1;
+	}
+
+	message SourceDataFieldFixed
+	{
+		required int32 n1 = 1;
+		required int32 n2 = 2;
+		required int32 nSamples = 3;
+		required int32 nID = 4;
+	}
+
+	// HEADER
+	required Header header = 1;
+
+	// DATA FIELD HEADER
+	optional DataFieldHeader dataFieldheader = 2;
+
+	// SOURCE DATA FIELD
+	optional SourceDataFieldFixed sourceDataFieldFixed = 3;
+	repeated Pixel FADCs = 4;
+	repeated ID pixelIDs = 5;
+
+	// TAIL
+	optional sint32 crc = 6;
+}
+
+message Packets
+{
+  repeated Packet packet = 1;
+}
