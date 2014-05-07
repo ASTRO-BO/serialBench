@@ -85,8 +85,8 @@ int main(int argc, char* argv[]) {
 	dfh->set_ntriggered(7);
 	dfh->set_telescopecounter(8);
 
-	const int N = 1000;
-	const int M = 20;
+	const int N = 1800;
+	const int M = 40;
 	benchmark::Packet::SourceDataFieldFixed* sdff = packet.mutable_sourcedatafieldfixed();
 	sdff->set_n1(N);
 	sdff->set_n2(0);
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 		for(int m=0; m<sdff->nsamples(); m++)
 		{
 			benchmark::Packet::Pixel::Sample* sample = FADC->add_samples();
-			int randNum = std::rand() / (RAND_MAX * 1.0f) * 10000;
+			int randNum = std::rand() / (RAND_MAX * 1.0f) * 65535; // [0-65535] (16bit)
 			sample->set_value(randNum);
 			structSize += sizeof(benchmark::Packet::Pixel::Sample);
 		}
