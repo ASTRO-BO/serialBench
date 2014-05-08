@@ -1,0 +1,8 @@
+Benchmark for the google protobuf format using an astronomical packet format.
+Testing packet size and serialization/parsing time.
+
+To build the benchmark just run:
+  $ make
+
+Then run the benchmark with:
+  $ ./serialBench
