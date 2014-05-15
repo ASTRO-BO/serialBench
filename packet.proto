@@ -44,16 +44,6 @@ message Packet
 		required int32 telescopeCounter = 8;
 	}
 
-	message Pixel
-	{
-		message Sample
-		{
-			required uint32 value = 1;
-		}
-
-		repeated Sample samples = 1;
-	}
-
 	message ID
 	{
 		required int32 value = 1;
@@ -75,7 +65,7 @@ message Packet
 
 	// SOURCE DATA FIELD
 	optional SourceDataFieldFixed sourceDataFieldFixed = 3;
-	repeated Pixel FADCs = 4;
+	optional bytes FADCs = 4;
 	repeated ID pixelIDs = 5;
 
 	// TAIL

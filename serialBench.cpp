@@ -57,19 +57,17 @@ void setPacket(benchmark::Packet& packet)
 	sdff->set_nsamples(M);
 	sdff->set_nid(0);
 
-	for(int n=0; n<sdff->n1(); n++)
-	{
-		benchmark::Packet::Pixel* FADC = packet.add_fadcs();
+	int fadcs[N][M];
 
-		for(int m=0; m<sdff->nsamples(); m++)
+	for(int n=0; n<N; n++)
+	{
+		for(int m=0; m<M; m++)
 		{
-			benchmark::Packet::Pixel::Sample* sample = FADC->add_samples();
 			int randNum = std::rand() / (RAND_MAX * 1.0f) * 65535; // [0-65535] (16bit)
-			sample->set_value(randNum);
-			structSize += sizeof(benchmark::Packet::Pixel::Sample);
+			fadcs[n][m] = randNum;
 		}
-		structSize += sizeof(benchmark::Packet::Pixel);
 	}
+	packet.set_fadcs(fadcs, N*M*sizeof(int));
 
 	for(int i=0; i<sdff->nid(); i++)
 	{
@@ -110,15 +108,16 @@ void printPacket(const benchmark::Packet& packet)
 	std::cout << "NSamples: " << packet.sourcedatafieldfixed().nsamples() << std::endl;
 	std::cout << "NID: " << packet.sourcedatafieldfixed().nid() << std::endl;
 
-	for(int n=0; n<packet.fadcs_size(); n++)
+	int N = packet.sourcedatafieldfixed().n1();
+	int M = packet.sourcedatafieldfixed().nsamples();
+
+	for(int n=0; n<N; n++)
 	{
-		std::cout << "Pixel " << n << std::endl;
-		const benchmark::Packet::Pixel& pixel = packet.fadcs(n);
-
-
-		std::cout << "Samples: " << std::endl;
-		for(int m=0; m<pixel.samples_size(); m++)
-			std::cout << pixel.samples(m).value() << " ";
+		for(int m=0; m<M; m++)
+		{
+			int* fadcs = (int*) packet.fadcs().c_str();
+			std::cout << fadcs[n*M+m] << " ";
+		}
 		std::cout << std::endl;
 	}
 
@@ -160,6 +159,7 @@ int main(int argc, char* argv[]) {
 	for(int i=0; i<NPACKETS; i++)
 	{
 		buffSize[i] = packet[i].ByteSize();
+//		std::cout << "Packet size: " << buffSize[i] << std::endl;
 		buffers[i] = new char[buffSize[i]];
 		packet[i].SerializeToArray(buffers[i], buffSize[i]);
 	}
