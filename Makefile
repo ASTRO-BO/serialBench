@@ -11,6 +11,6 @@ protoc_middleman: packet.proto
 
 serialBench: serialBench.cpp protoc_middleman
 	pkg-config --cflags protobuf  # fails if protobuf is not installed
-	c++ serialBench.cpp packet.pb.cc -o serialBench `pkg-config --cflags --libs protobuf` -lrt
+	c++ -g serialBench.cpp packet.pb.cc -o serialBench `pkg-config --cflags --libs protobuf` -lrt
 
 .PHONY: all cpp java python clean
